@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
    int scanned = 0;
    for(int i = 0; i < fileList.size(); i++) {
       fileList[i].compute(selectedAlgorithm);
-      printProgressBar(std::floor(((i+1)/(float)fileList.size())*100));
+      printProgressBar(std::floor(((i+1)/static_cast<float>(fileList.size()))*100));
    }
    std::cout << std::endl;
     
