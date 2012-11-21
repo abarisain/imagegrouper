@@ -30,31 +30,25 @@ class FileComparaisonResult {
 class FileHash {
    private:
       std::string _path;
-      ulong64 _hash;
-      Digest _digest;
-      uint8_t* _mh;
-      int _mhSize;
-      HashAlgorithm _computedAlgorithm;
-      void computeAll();
       int computeDigest();
       void computeMh();
       int computeHash();
    public:
+      ulong64 hash;
+      Digest digest;
+      uint8_t* mh;
+      int mhSize;
+      HashAlgorithm computedAlgorithm;
       FileHash(const std::string &lPath);
       ~FileHash();
       friend bool operator==(const FileHash &left, const FileHash &right);
       friend bool operator!=(const FileHash &left, const FileHash &right);
       void compute(HashAlgorithm algorithm = ALL);
-      ulong64 hash() const;
-      const Digest& digest() const;
       const std::string& path() const;
-      uint8_t* mh() const;
-      int mhSize() const;
-      HashAlgorithm computedAlgorithm() const;
       double hammingDistance(const FileHash &secondHash) const;
       double hammingDistanceMh(const FileHash &secondHash) const;
       double crosscorr(const FileHash &secondHash) const;
-      bool compareTo(const FileHash &secondHash, FileComparaisonResult& result) const;
+      FileComparaisonResult compareTo(const FileHash &secondHash) const;
       void printHtml(ofstream& output, int indentation = 0) const;
       bool isHashComparaisonPossible(const FileHash &secondHash, const HashAlgorithm algorithm) const;
 };

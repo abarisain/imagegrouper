@@ -32,10 +32,10 @@ int FileComparaisonResult::percentage() const {
 
 FileHash::FileHash(const std::string &lPath) {
    this->_path = lPath;
-   this->_hash = 0ul;
-   this->_mh = NULL;
-   this->_mhSize = 0;
-   this->_computedAlgorithm = DCT;
+   this->hash = 0ul;
+   this->mh = NULL;
+   this->mhSize = 0;
+   this->computedAlgorithm = DCT;
 }
 
 FileHash::~FileHash() {
@@ -64,28 +64,24 @@ void FileHash::compute(HashAlgorithm algorithm) {
          this->computeDigest();
          break;
       default:
-         this->computeAll();
+         this->computeHash();
+         this->computeDigest();
+         this->computeMh();
          break;
    }
-   this->_computedAlgorithm = algorithm;
-}
-
-void FileHash::computeAll() {
-   this->computeHash();
-   this->computeDigest();
-   this->computeMh();
+   this->computedAlgorithm = algorithm;
 }
 
 int FileHash::computeDigest() {
-   return ph_image_digest(this->_path.c_str(), 1.0f, 1.0f, this->_digest); 
+   return ph_image_digest(this->_path.c_str(), 1.0f, 1.0f, this->digest); 
 }
 
 void FileHash::computeMh() {
-   _mh = ph_mh_imagehash(this->_path.c_str(), this->_mhSize);
+   mh = ph_mh_imagehash(this->_path.c_str(), this->mhSize);
 }
 
 int FileHash::computeHash() {
-   return ph_dct_imagehash(this->_path.c_str(), this->_hash);
+   return ph_dct_imagehash(this->_path.c_str(), this->hash);
 }
 
 //All comparaisons are standardized (unlike the lib)
@@ -93,53 +89,34 @@ int FileHash::computeHash() {
 double FileHash::hammingDistance(const FileHash &secondHash) const {
    if(!this->isHashComparaisonPossible(secondHash, DCT))
       return -1;
-   return (double)ph_hamming_distance(this->_hash, secondHash.hash())/64;
+   return (double)ph_hamming_distance(this->hash, secondHash.hash)/64;
 }
 
 double FileHash::hammingDistanceMh(const FileHash &secondHash) const {
    if(!this->isHashComparaisonPossible(secondHash, MH))
       return -1;
-   return ph_hammingdistance2(this->_mh, this->_mhSize, secondHash.mh(), secondHash.mhSize());
+   return ph_hammingdistance2(this->mh, this->mhSize, secondHash.mh, secondHash.mhSize);
 }
 
 double FileHash::crosscorr(const FileHash &secondHash) const {
    if(!this->isHashComparaisonPossible(secondHash, RADISH))
       return -1;
    double pcc;
-   ph_crosscorr(this->_digest, secondHash.digest(), pcc);
+   ph_crosscorr(this->digest, secondHash.digest, pcc);
    return 1-pcc;
-}
-
-ulong64 FileHash::hash() const {
-   return this->_hash;
-}
-
-const Digest& FileHash::digest() const {
-   return this->_digest;
 }
 
 const std::string& FileHash::path() const {
    return this->_path;
 }
 
-uint8_t* FileHash::mh() const {
-   return this->_mh;
-}
-
-int FileHash::mhSize() const {
-   return this->_mhSize;
-}
-
-HashAlgorithm FileHash::computedAlgorithm() const {
-   return this->_computedAlgorithm;
-}
-
-bool FileHash::compareTo(const FileHash &secondHash, FileComparaisonResult& result) const {
+FileComparaisonResult FileHash::compareTo(const FileHash &secondHash) const {
+   FileComparaisonResult result;
    result.dct = this->hammingDistance(secondHash);
    result.mh = this->hammingDistanceMh(secondHash);
    result.radish = this->crosscorr(secondHash);
-   result.algorithm = this->_computedAlgorithm;
-   return true;
+   result.algorithm = this->computedAlgorithm;
+   return result;
 }
 
 void FileHash::printHtml(ofstream& output, int indentation) const {
@@ -154,8 +131,8 @@ void FileHash::printHtml(ofstream& output, int indentation) const {
 
 bool FileHash::isHashComparaisonPossible(const FileHash &secondHash, const HashAlgorithm algorithm) const {
    //If one of the files does not implement the requested hash, you can't compare them
-   if((this->_computedAlgorithm != algorithm && this->_computedAlgorithm != ALL) || 
-      (secondHash.computedAlgorithm() != algorithm && secondHash.computedAlgorithm() != ALL) )
+   if((this->computedAlgorithm != algorithm && this->computedAlgorithm != ALL) ||
+      (secondHash.computedAlgorithm != algorithm && secondHash.computedAlgorithm != ALL) )
       return false;
    return true;
 }
@@ -224,7 +201,7 @@ std::vector<FileHashGroup> FileHashGrouper::computeGroups(const std::vector<File
       for(int j = 0; j < hashes.size(); j++) {
          if(j == i)
             continue;
-         hashes[i].compareTo(hashes[j], cmpResult);
+         cmpResult = hashes[i].compareTo(hashes[j]);
          
          //If you have trouble understanding this condition, think backwards
          //File is skipped (no match) if ONE threshold is required (cli arg)
