@@ -226,7 +226,7 @@ std::vector<FileHashGroup> FileHashGrouper::computeGroups(const std::vector<File
       }
       if(tmpGroup._elements.size() == 0)
          continue;
-      if(!removeDuplicateGroups) {
+      if(removeDuplicateGroups) {
          isGroupDuplicate = false;
          for(int k = 0; k < groups.size(); k++) {
             if(groups[k] == tmpGroup) {
