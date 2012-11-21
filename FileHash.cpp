@@ -195,7 +195,7 @@ FileHashGrouper::FileHashGrouper() {
 std::vector<FileHashGroup> FileHashGrouper::computeGroups(const std::vector<FileHash> &hashes) const {
    std::vector<FileHashGroup> groups;
    FileHashGroup tmpGroup;
-   bool isGroupDuplicate;
+   bool isGroupDuplicate = false;
    FileComparaisonResult cmpResult;
    for(int i = 0; i < hashes.size(); i++) {
       for(int j = 0; j < hashes.size(); j++) {
@@ -226,14 +226,16 @@ std::vector<FileHashGroup> FileHashGrouper::computeGroups(const std::vector<File
       }
       if(tmpGroup._elements.size() == 0)
          continue;
-      isGroupDuplicate = false;
-      for(int k = 0; k < groups.size(); k++) {
-         if(groups[k] == tmpGroup) {
-            isGroupDuplicate = true;
-            break;
+      if(!this->removeDuplicateGroups) {
+         isGroupDuplicate = false;
+         for(int k = 0; k < groups.size(); k++) {
+            if(groups[k] == tmpGroup) {
+               isGroupDuplicate = true;
+               break;
+            }
          }
       }
-      if(!isGroupDuplicate)
+      if(!isGroupDuplicate || !this->removeDuplicateGroups)
          groups.push_back(tmpGroup);
       tmpGroup._elements.clear();
    }
